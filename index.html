@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Wisdom Quiz</title>
+    <link rel="manifest" href="data:application/manifest+json,{\"name\":\"Wisdom Quiz\",\"short_name\":\"WisdomQuiz\",\"description\":\"50 Questions | 60 Seconds | 50-50 Joker\",\"start_url\":\"/\",\"display\":\"standalone\",\"background_color\":\"#1e1b4b\",\"theme_color\":\"#7c3aed\",\"icons\":[{\"src\":\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%237c3aed'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='white' font-weight='bold'%3EWQ%3C/text%3E%3C/svg%3E\",\"sizes\":\"any\",\"type\":\"image/svg+xml\"}]}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* ========== MÜZİK PANELİ ========== */
+        .music-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 200;
+            border: 1px solid #7c3aed;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .music-panel.hidden {
+            display: none;
+        }
+        .music-cover {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #7c3aed, #6d28d9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            overflow: hidden;
+        }
+        .music-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .music-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .music-name {
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .music-status {
+            color: #a78bfa;
+            font-size: 10px;
+        }
+        .music-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .music-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .music-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .next-song-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            z-index: 300;
+            border-left: 4px solid #fbbf24;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: toastFade 2.5s ease forwards;
+            pointer-events: none;
+        }
+        @keyframes toastFade {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
+        /* ========== İKONLAR ========== */
+        
+        /* Kupa İkonu */
+        .icon-trophy {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+        .icon-trophy .cup-body {
+            position: absolute;
+            width: 38px;
+            height: 32px;
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            top: 12px;
+            left: 16px;
+            border-radius: 0 0 35% 35%;
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+        .icon-trophy .cup-body::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 6px;
+            background: #fbbf24;
+            top: -5px;
+            left: 7px;
+            border-radius: 20px 20px 0 0;
+        }
+        .icon-trophy .cup-handle {
+            position: absolute;
+            width: 10px;
+            height: 18px;
+            border: 2px solid #f59e0b;
+            border-left: none;
+            border-radius: 0 15px 15px 0;
+            top: 20px;
+            right: 12px;
+        }
+        .icon-trophy .cup-base {
+            position: absolute;
+            width: 30px;
+            height: 5px;
+            background: linear-gradient(145deg, #fbbf24, #d97706);
+            bottom: 8px;
+            left: 20px;
+            border-radius: 3px;
+        }
+        .icon-trophy .star {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fef08a;
+            top: 22px;
+            left: 31px;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+
+        /* Müzik İkonu */
+        .icon-music {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-music .note {
+            position: absolute;
+            width: 4px;
+            height: 12px;
+            background: white;
+            left: 4px;
+            top: 4px;
+            border-radius: 2px;
+            box-shadow: 8px 0 0 white, 16px 0 0 white;
+        }
+        .icon-music .note::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 6px;
+            background: white;
+            border-radius: 0 0 50% 50%;
+            left: -2px;
+            top: 10px;
+        }
+        .icon-music .note2 {
+            position: absolute;
+            width: 4px;
+            height: 10px;
+            background: white;
+            left: 12px;
+            top: 6px;
+            border-radius: 2px;
+        }
+        .icon-music .note2::before {
+            content: '';
+            position: absolute;
+            width: 7px;
+            height: 5px;
+            background: white;
+            border-radius: 0 0 50% 50%;
+            left: -1px;
+            top: 8px;
+        }
+
+        /* Paylaş İkonu */
+        .icon-share {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-share .line {
+            position: absolute;
+            width: 12px;
+            height: 2px;
+            background: white;
+            top: 9px;
+            left: 2px;
+            border-radius: 1px;
+        }
+        .icon-share .line::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid white;
+            border-top: 2px solid white;
+            transform: rotate(45deg);
+            left: 4px;
+            top: -8px;
+        }
+        .icon-share .line::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid white;
+            border-bottom: 2px solid white;
+            transform: rotate(-45deg);
+            left: 4px;
+            top: 2px;
+        }
+        .icon-share .dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            left: 14px;
+            top: 0;
+            box-shadow: 0 8px 0 white;
+        }
+
+        /* Ayarlar Dişli İkonu */
+        .icon-settings {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-settings svg {
+            width: 100%;
+            height: 100%;
+            stroke: white;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Dil İkonu */
+        .icon-language {
+            width: 26px;
+            height: 26px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-language .globe {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2px solid white;
+            border-radius: 50%;
+            top: 4px;
+            left: 4px;
+        }
+        .icon-language .globe-line {
+            position: absolute;
+            width: 10px;
+            height: 2px;
+            background: white;
+            top: 12px;
+            left: 8px;
+        }
+        .icon-language .globe-line2 {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background: white;
+            top: 8px;
+            left: 12px;
+        }
+        .icon-language .bubble {
+            position: absolute;
+            width: 10px;
+            height: 8px;
+            background: white;
+            border-radius: 40%;
+            bottom: 2px;
+            right: 2px;
+        }
+        .icon-language .bubble::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #312e81;
+            border-radius: 50%;
+            bottom: 1px;
+            right: 1px;
+        }
+
+        /* Titreşim İkonu */
+        .icon-vibrate {
+            width: 26px;
+            height: 24px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-vibrate .bar {
+            position: absolute;
+            width: 3px;
+            background: white;
+            border-radius: 2px;
+            bottom: 4px;
+        }
+        .icon-vibrate .bar-1 { height: 12px; left: 2px; }
+        .icon-vibrate .bar-2 { height: 20px; left: 7px; }
+        .icon-vibrate .bar-3 { height: 16px; left: 12px; }
+        .icon-vibrate .bar-4 { height: 8px; left: 17px; }
+        .icon-vibrate .bar-5 { height: 10px; left: 22px; }
+        .icon-vibrate .wave {
+            position: absolute;
+            width: 2px;
+            height: 4px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 1px;
+        }
+        .icon-vibrate .w1 { left: 4px; top: 2px; }
+        .icon-vibrate .w2 { left: 9px; top: 0px; }
+        .icon-vibrate .w3 { left: 14px; top: 1px; }
+
+        /* Ses İkonu */
+        .icon-sound {
+            width: 26px;
+            height: 24px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-sound .speaker {
+            position: absolute;
+            width: 12px;
+            height: 14px;
+            background: white;
+            left: 2px;
+            top: 5px;
+            clip-path: polygon(0% 25%, 30% 25%, 55% 0%, 55% 100%, 30% 75%, 0% 75%);
+        }
+        .icon-sound .wave {
+            position: absolute;
+            width: 2px;
+            background: white;
+            border-radius: 1px;
+            top: 7px;
+        }
+        .icon-sound .wave-1 { height: 8px; left: 16px; }
+        .icon-sound .wave-2 { height: 12px; left: 19px; top: 6px; }
+        .icon-sound .wave-3 { height: 6px; left: 22px; top: 9px; }
+        .icon-sound .dot {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            left: 14px;
+            top: 3px;
+        }
+
+        /* Doğru İkonu */
+        .icon-check {
+            width: 32px;
+            height: 32px;
+            display: inline-block;
+            position: relative;
+            background: linear-gradient(145deg, #059669, #10b981);
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        .icon-check::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 14px;
+            border-right: 3px solid white;
+            border-bottom: 3px solid white;
+            transform: rotate(45deg);
+            left: 11px;
+            top: 7px;
+        }
+
+        /* Yanlış İkonu */
+        .icon-cross {
+            width: 32px;
+            height: 32px;
+            display: inline-block;
+            position: relative;
+            background: linear-gradient(145deg, #dc2626, #ef4444);
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        .icon-cross::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 3px;
+            background: white;
+            top: 14px;
+            left: 8px;
+            transform: rotate(45deg);
+            border-radius: 2px;
+        }
+        .icon-cross::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 3px;
+            background: white;
+            top: 14px;
+            left: 8px;
+            transform: rotate(-45deg);
+            border-radius: 2px;
+        }
+
+        /* Oynat İkonu */
+        .icon-play {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-play .triangle {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 12px solid white;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            left: 2px;
+            top: 2px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* Zamanlayıcı İkonu */
+        .icon-timer {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-timer .circle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+        }
+        .icon-timer .hand {
+            position: absolute;
+            width: 8px;
+            height: 2px;
+            background: white;
+            top: 12px;
+            left: 12px;
+            transform-origin: left center;
+            border-radius: 2px;
+            animation: timerTick 1s linear infinite;
+        }
+        .icon-timer .dot {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            top: 10px;
+            left: 10px;
+        }
+        @keyframes timerTick {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Joker İkonu */
+        .icon-joker {
+            width: 26px;
+            height: 26px;
+            display: inline-block;
+            position: relative;
+        }
+        .icon-joker .circle-outer {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border: 2px solid white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+        }
+        .icon-joker .text {
+            position: absolute;
+            font-size: 11px;
+            font-weight: 800;
+            color: white;
+            top: 6px;
+            left: 7px;
+        }
+        .icon-joker .divider {
+            position: absolute;
+            width: 16px;
+            height: 2px;
+            background: white;
+            top: 12px;
+            left: 5px;
+            border-radius: 1px;
+        }
+
+        /* AFK Butonu Stili */
+        .afk-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #dc2626, #b91c1c);
+            border: 3px solid #fef08a;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            flex-shrink: 0;
+            margin-left: 5px;
+        }
+        .afk-btn.active {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            border-color: #dc2626;
+            color: #1e1b4b;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.6);
+        }
+        .afk-btn:hover {
+            transform: scale(1.03);
+        }
+
+        /* ========== MENU ========== */
+        .menu-screen {
+            background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+            border: 4px solid #7c3aed;
+            border-radius: 25px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-title {
+            color: #a78bfa;
+            font-size: 38px;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .menu-subtitle {
+            color: #e9d5ff;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .menu-btn {
+            background: linear-gradient(145deg, #7c3aed 0%, #6d28d9 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 14px 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.5);
+        }
+
+        /* Paylaş Butonu */
+        .share-btn {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            border: none;
+            border-radius: 15px;
+            padding: 12px 20px;
+            color: #1e1b4b;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(251, 191, 36, 0.5);
+        }
+
+        /* ========== KATEGORİ SEÇİM MENÜSÜ ========== */
+        .category-screen {
+            background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+            border: 4px solid #7c3aed;
+            border-radius: 25px;
+            padding: 30px 25px;
+            text-align: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .category-title {
+            color: #a78bfa;
+            font-size: 28px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .category-subtitle {
+            color: #e9d5ff;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .category-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .category-btn {
+            background: linear-gradient(145deg, #4c1d95, #5b21b6);
+            border: 2px solid #7c3aed;
+            border-radius: 60px;
+            padding: 16px 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .category-btn:hover {
+            transform: translateY(-3px);
+            border-color: #a78bfa;
+            background: linear-gradient(145deg, #6d28d9, #7c3aed);
+        }
+
+        .category-back {
+            background: linear-gradient(145deg, #4b5563, #374151);
+            border: 2px solid #6b7280;
+            border-radius: 15px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .category-back:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(145deg, #6b7280, #4b5563);
+        }
+
+        /* ========== AYARLAR ========== */
+        .settings-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            display: none;
+        }
+
+        .settings-panel.show {
+            display: block;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .setting-label {
+            color: white;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.3);
+            padding: 4px;
+            border-radius: 40px;
+        }
+
+        .lang-option {
+            padding: 5px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .lang-option.active {
+            background: #7c3aed;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: #4b5563;
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #7c3aed;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 3px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 25px;
+        }
+
+        /* ========== OYUN ALANI ========== */
+        .score-board {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 3px solid #7c3aed;
+            border-radius: 20px;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            height: 80px;
+            min-height: 80px;
+            max-height: 80px;
+            overflow: hidden;
+        }
+
+        .score-item {
+            text-align: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .score-label {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .joker-btn {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            border: none;
+            border-radius: 40px;
+            padding: 8px 16px;
+            color: #1e1b4b;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .joker-btn:hover:not(.disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+
+        .joker-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .timer-bar {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            height: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            background: linear-gradient(90deg, #10b981, #fbbf24, #ef4444);
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.1s linear;
+        }
+
+        .timer-text {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .question-container {
+            background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+            border: 4px solid #7c3aed;
+            border-radius: 25px;
+            padding: 25px 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .question-header {
+            background: #7c3aed;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 40px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            display: table;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            letter-spacing: 2px;
+        }
+
+        .question-img {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 20px;
+            margin: 15px auto;
+            display: block;
+            border: 3px solid #7c3aed;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .question-text {
+            color: white;
+            font-size: 20px;
+            text-align: center;
+            line-height: 1.45;
+            margin: 20px 0;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .answer-btn {
+            background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+            border: 2px solid #7c3aed;
+            border-radius: 15px;
+            padding: 15px 12px;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            text-align: left;
+        }
+
+        .answer-btn:hover:not(:disabled) {
+            transform: translateX(5px);
+            border-color: #a78bfa;
+        }
+
+        .answer-label {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #7c3aed;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .answer-text {
+            margin-left: 48px;
+            color: white;
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(145deg, #065f46 0%, #059669 100%);
+            border-color: #10b981;
+        }
+
+        .answer-btn.wrong {
+            background: linear-gradient(145deg, #7f1d1d 0%, #dc2626 100%);
+            border-color: #ef4444;
+        }
+
+        .answer-btn.hidden {
+            display: none;
+        }
+
+        .answer-btn:disabled {
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        .result-message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+        }
+
+        .next-btn {
+            background: linear-gradient(145deg, #7c3aed 0%, #6d28d9 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 35px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            transition: 0.2s;
+        }
+
+        .next-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .game-over {
+            background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+            border: 4px solid #7c3aed;
+            border-radius: 25px;
+            padding: 35px 25px;
+            text-align: center;
+        }
+
+        .game-over h2 {
+            color: #a78bfa;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            color: white;
+            font-size: 22px;
+            margin: 15px 0;
+        }
+
+        .restart-btn {
+            background: linear-gradient(145deg, #7c3aed 0%, #6d28d9 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 35px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .offline-badge {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            color: #fbbf24;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            z-index: 100;
+        }
+
+        @media (max-width: 600px) {
+            .answers-grid { grid-template-columns: 1fr; }
+            .question-text { font-size: 18px; }
+            .answer-btn { padding: 12px 10px; }
+            .answer-label { width: 28px; height: 28px; font-size: 14px; }
+            .answer-text { margin-left: 42px; }
+            .afk-btn { width: 45px; height: 45px; font-size: 14px; }
+            .score-board { gap: 10px; }
+            .score-label { font-size: 12px; }
+            .score-value { font-size: 22px; }
+            .category-btn { font-size: 16px; padding: 12px 16px; }
+            .question-img { max-width: 250px; }
+            .music-panel { padding: 5px 12px; }
+            .music-cover { width: 32px; height: 32px; }
+            .music-name { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container" id="app"></div>
+<div id="offlineBadge" class="offline-badge" style="display:none;">📡 Offline Mode</div>
+
+<!-- Arka Plan Müziği -->
+<audio id="bgMusic" preload="auto">
+    <source src="sarki1.mp3" type="audio/mpeg">
+    <source src="sarki2.mp3" type="audio/mpeg">
+    <source src="sarki3.mp3" type="audio/mpeg">
+    <source src="sarki4.mp3" type="audio/mpeg">
+    <source src="sarki5.mp3" type="audio/mpeg">
+        <source src="sarki6.mp3" type="audio/mpeg">
+            <source src="sarki7.mp3" type="audio/mpeg">
+                <source src="sarki8.mp3" type="audio/mpeg">
+</audio>
+
+<!-- Müzik Kontrol Paneli -->
+<div id="musicPanel" class="music-panel hidden">
+    <div class="music-cover" id="musicCover">
+        <span>🎵</span>
+    </div>
+    <div class="music-info">
+        <span class="music-name" id="musicName">Müzik Kapalı</span>
+        <span class="music-status" id="musicStatus">Kapalı</span>
+    </div>
+    <div class="music-controls">
+        <button class="music-btn" id="prevMusicBtn" style="display:none;">⏮️</button>
+        <button class="music-btn" id="nextMusicBtn">⏭️</button>
+    </div>
+</div>
+
+<script>
+    // ==================== DİL DOSYALARI ====================
+    const translations = {
+        tr: {
+            menuTitle: "WISDOM QUIZ",
+            menuSubtitle: "50 Soru | 60 Saniye | 50-50 Joker",
+            startGame: "OYUNA BAŞLA",
+            settings: "AYARLAR",
+            share: "📤 ARKADAŞLARINA GÖNDER",
+            vibration: "Titreşim",
+            sound: "Ses Efekti",
+            music: "Arka Plan Müziği",
+            language: "Dil",
+            correct: "DOĞRU",
+            wrong: "YANLIŞ",
+            seconds: "saniye",
+            questionText: "SORU",
+            correctAnswer: "DOĞRU!",
+            wrongAnswer: "YANLIŞ!",
+            timeUp: "Süre doldu!",
+            next: "SONRAKİ SORU",
+            gameOver: "OYUN BİTTİ",
+            perfect: "MÜKEMMEL!",
+            veryGood: "ÇOK İYİ!",
+            notBad: "FENA DEĞİL",
+            keepPracticing: "DAHA İYİ OLABİLİR",
+            mainMenu: "ANA MENÜ",
+            score: "BAŞARI",
+            offline: "Çevrimdışı Mod",
+            shareTitle: "Wisdom Quiz - Bilgi Yarışması",
+            shareText: "🎮 Wisdom Quiz oynuyorum! Sen de dene: 50 soru, 60 saniye, 50-50 joker!",
+            afk: "AFK",
+            selectCategory: "KATEGORİ SEÇ",
+            categoryClassic: "📚 KLASİK (50 Soru)",
+            categorySports: "⚽ SPOR (50 Soru)",
+            categoryWhoIs: "🖼️ BU KİM? (11 Soru)",
+            back: "◀ GERİ",
+            musicOff: "Müzik Kapalı",
+            musicOn: "Çalıyor",
+            songChanged: "🎵 şarkısına geçildi"
+        },
+        en: {
+            menuTitle: "WISDOM QUIZ",
+            menuSubtitle: "50 Questions | 60 Seconds | 50-50 Joker",
+            startGame: "START GAME",
+            settings: "SETTINGS",
+            share: "📤 SHARE WITH FRIENDS",
+            vibration: "Vibration",
+            sound: "Sound Effect",
+            music: "Background Music",
+            language: "Language",
+            correct: "CORRECT",
+            wrong: "WRONG",
+            seconds: "seconds",
+            questionText: "QUESTION",
+            correctAnswer: "CORRECT!",
+            wrongAnswer: "WRONG!",
+            timeUp: "Time's up!",
+            next: "NEXT QUESTION",
+            gameOver: "GAME OVER",
+            perfect: "PERFECT!",
+            veryGood: "VERY GOOD!",
+            notBad: "NOT BAD",
+            keepPracticing: "KEEP PRACTICING",
+            mainMenu: "MAIN MENU",
+            score: "SCORE",
+            offline: "Offline Mode",
+            shareTitle: "Wisdom Quiz",
+            shareText: "🎮 I'm playing Wisdom Quiz! Try it: 50 questions, 60 seconds, 50-50 joker!",
+            afk: "AFK",
+            selectCategory: "SELECT CATEGORY",
+            categoryClassic: "📚 CLASSIC (50 Questions)",
+            categorySports: "⚽ SPORTS (50 Questions)",
+            categoryWhoIs: "🖼️ WHO IS THIS? (11 Questions)",
+            back: "◀ BACK",
+            musicOff: "Music Off",
+            musicOn: "Playing",
+            songChanged: "🎵 Now playing: "
+        }
+    };
+
+    let currentLang = localStorage.getItem('quizLang') || 'tr';
+    
+    function t(key) {
+        return translations[currentLang][key] || key;
+    }
+    
+    // ==================== MÜZİK AYARLARI (GELİŞMİŞ) ====================
+    let musicEnabled = false;
+    let currentSongIndex = 0;
+    const songs = ['sarki1.mp3', 'sarki2.mp3', 'sarki3.mp3', 'sarki4.mp3', 'sarki5.mp3'];
+    const songNames = ['Şarkı 1', 'Şarkı 2', 'Şarkı 3', 'Şarkı 4', 'Şarkı 5', 'sarki6', 'sarki7', 'sarki8'];
+    const songCovers = [
+        '🎵', '🎶', '🎤', '🎧', '🎼'
+    ];
+    const bgMusic = document.getElementById('bgMusic');
+    
+    function updateMusicPanel() {
+        const panel = document.getElementById('musicPanel');
+        const musicNameElem = document.getElementById('musicName');
+        const musicStatusElem = document.getElementById('musicStatus');
+        const musicCoverElem = document.getElementById('musicCover');
+        
+        if (musicEnabled && bgMusic && !bgMusic.paused) {
+            panel.classList.remove('hidden');
+            musicNameElem.textContent = songNames[currentSongIndex];
+            musicStatusElem.textContent = t('musicOn');
+            musicCoverElem.innerHTML = `<span style="font-size:24px;">${songCovers[currentSongIndex]}</span>`;
+        } else if (musicEnabled) {
+            panel.classList.remove('hidden');
+            musicNameElem.textContent = songNames[currentSongIndex];
+            musicStatusElem.textContent = t('musicOff');
+            musicCoverElem.innerHTML = `<span style="font-size:24px;">🎵</span>`;
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    function showSongChangeToast(songName) {
+        const toast = document.createElement('div');
+        toast.className = 'next-song-toast';
+        toast.innerHTML = `🎵 ${songName} ${t('songChanged')}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.remove();
+        }, 2500);
+    }
+    
+    function playNextSong() {
+        if (!musicEnabled) return;
+        currentSongIndex = (currentSongIndex + 1) % songs.length;
+        bgMusic.src = songs[currentSongIndex];
+        bgMusic.play().catch(e => console.log('Müzik başlatılamadı:', e));
+        updateMusicPanel();
+        showSongChangeToast(songNames[currentSongIndex]);
+    }
+    
+    function initMusic() {
+        if (musicEnabled && bgMusic && bgMusic.paused) {
+            bgMusic.play().catch(e => console.log('Müzik başlatılamadı:', e));
+            updateMusicPanel();
+        }
+    }
+    
+    function toggleMusic() {
+        musicEnabled = !musicEnabled;
+        if (musicEnabled) {
+            if (bgMusic.src === '' || bgMusic.src.indexOf('blob') !== -1) {
+                const randomIndex = Math.floor(Math.random() * songs.length);
+                bgMusic.src = songs[randomIndex];
+                currentSongIndex = randomIndex;
+            }
+            bgMusic.play().catch(e => console.log('Müzik başlatılamadı:', e));
+            showSongChangeToast(songNames[currentSongIndex]);
+        } else {
+            bgMusic.pause();
+        }
+        localStorage.setItem('musicEnabled', musicEnabled);
+        updateMusicPanel();
+        const musicToggle = document.getElementById('musicToggle');
+        if (musicToggle) musicToggle.classList.toggle('active', musicEnabled);
+    }
+    
+    if (bgMusic) {
+        bgMusic.volume = 0.3;
+        bgMusic.addEventListener('ended', function() {
+            if (musicEnabled) {
+                playNextSong();
+            }
+        });
+    }
+    
+    const savedMusic = localStorage.getItem('musicEnabled');
+    if (savedMusic !== null) musicEnabled = savedMusic === 'true';
+    
+    if (bgMusic && musicEnabled) {
+        const randomIndex = Math.floor(Math.random() * songs.length);
+        bgMusic.src = songs[randomIndex];
+        currentSongIndex = randomIndex;
+        setTimeout(() => {
+            if (musicEnabled && bgMusic.paused) {
+                bgMusic.play().catch(e => console.log('Otomatik başlatılamadı'));
+            }
+            updateMusicPanel();
+        }, 500);
+    }
+    
+    // Next song butonu
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'nextMusicBtn' || e.target.parentElement?.id === 'nextMusicBtn') {
+            if (musicEnabled) {
+                playNextSong();
+            }
+        }
+    });
+    
+    // ==================== "BU KİM?" SORULARI (RESİMLİ) ====================
+    const whoIsQuestions = [
+        { q: "resim1.png", a: ["Enes Batur", "Orkun Işıtmak", "Reynmen", "Burak Oyunda"], c: 0 },
+        { q: "resim2.png", a: ["Ahmet Kural", "Murat Cemcir", "Cengiz Bozkurt", "Şevket Çoruh"], c: 0 },
+        { q: "resim3.png", a: ["Volkan Konak", "İbrahim Tatlıses", "Ferdi Tayfur", "Müslüm Gürses"], c: 0 },
+        { q: "resim4.png", a: ["Oğuzhan Koç", "Cem Yılmaz", "Doğu Demirkol", "Tolga Çevik"], c: 0 },
+        { q: "resim5.png", a: ["Uzi", "Motive", "Ezhel", "Khontkar"], c: 0 },
+        { q: "resim6.png", a: ["Aleyna Tilki", "Tuğçe Kandemir", "Sıla", "Demet Akalın"], c: 0 },
+        { q: "resim7.png", a: ["Blok3", "Hidra", "Sagopa Kajmer", "Ceza"], c: 0 },
+        { q: "resim8.png", a: ["Sagopa Kajmer", "Ceza", "Fuat", "Killa Hakan"], c: 0 },
+        { q: "resim9.png", a: ["Tony Stark (Iron Man)", "Steve Rogers (Kaptan Amerika)", "Bruce Wayne", "Peter Parker"], c: 0 },
+        { q: "resim10.png", a: ["Paul Walker", "Vin Diesel", "Dwayne Johnson", "Jason Statham"], c: 0 },
+        { q: "resim11.png", a: ["Kemal Sunal", "Şener Şen", "Münir Özkul", "Adile Naşit"], c: 0 }
+    ];
+
+    // ==================== SPOR SORULARI (50 SORU) ====================
+    const sportsQuestions = [
+        { q: "2022 FIFA Dünya Kupası'nı kazanan ülke hangisidir?", a: ["Fransa", "Arjantin", "Hırvatistan", "Fas"], c: 1 },
+        { q: "Şampiyonlar Ligi'ni en çok kazanan takım hangisidir?", a: ["AC Milan", "Bayern Münih", "Liverpool", "Real Madrid"], c: 3 },
+        { q: "Michael Jordan hangi spor dalında efsane olmuştur?", a: ["Futbol", "Basketbol", "Beyzbol", "Tenis"], c: 1 },
+        { q: "Türkiye'nin Formula 1'de yarışan ilk pilotu kimdir?", a: ["Can Artam", "Jason Tahincioğlu", "Ayhancan Güven", "Cem Bölükbaşı"], c: 1 },
+        { q: "2023 NBA Şampiyonu hangi takımdır?", a: ["Golden State Warriors", "Miami Heat", "Denver Nuggets", "Boston Celtics"], c: 2 },
+        { q: "Rafael Nadal kaç kez Roland Garros'u kazanmıştır?", a: ["12", "13", "14", "15"], c: 2 },
+        { q: "Türkiye'nin en çok gol atan futbolcusu kimdir?", a: ["Hakan Şükür", "Burak Yılmaz", "Cenk Tosun", "Tuncay Şanlı"], c: 0 },
+        { q: "Olimpiyat oyunları kaç yılda bir düzenlenir?", a: ["2", "3", "4", "5"], c: 2 },
+        { q: "Fenerbahçe'nin Şükrü Saraçoğlu Stadyumu hangi ilçededir?", a: ["Beşiktaş", "Kadıköy", "Şişli", "Üsküdar"], c: 1 },
+        { q: "Efsanevi boksör Muhammed Ali'nin doğum adı nedir?", a: ["Cassius Clay", "Joe Frazier", "Mike Tyson", "George Foreman"], c: 0 },
+        { q: "2024 Avrupa Futbol Şampiyonası (EURO) nerede düzenlenecek?", a: ["Almanya", "Fransa", "İtalya", "İngiltere"], c: 0 },
+        { q: "Tiger Woods hangi spor dalıyla ünlüdür?", a: ["Tenis", "Golf", "Basketbol", "Yüzme"], c: 1 },
+        { q: "Galatasaray'ın ilk yabancı futbolcusu kimdir?", a: ["Taffarel", "Hagi", "Popescu", "Jardel"], c: 0 },
+        { q: "Usain Bolt 100 metreyi kaç saniyede koşmuştur (dünya rekoru)?", a: ["9.58", "9.63", "9.69", "9.72"], c: 0 },
+        { q: "Beşiktaş'ın Vodafone Park Stadyumu hangi semttedir?", a: ["Beşiktaş", "Şişli", "Beyoğlu", "Levent"], c: 0 },
+        { q: "Formula 1'de en çok şampiyonluk kazanan pilot kimdir?", a: ["Michael Schumacher", "Lewis Hamilton", "Ayrton Senna", "Alain Prost"], c: 1 },
+        { q: "Türk basketbolunun efsanesi Hidayet Türkoğlu hangi NBA takımında oynamıştır?", a: ["Chicago Bulls", "Los Angeles Lakers", "Orlando Magic", "Boston Celtics"], c: 2 },
+        { q: "Vakıfbank hangi spor dalında dünya devidir?", a: ["Futbol", "Basketbol", "Voleybol", "Hentbol"], c: 2 },
+        { q: "Türkiye milli futbol takımının en farklı galibiyeti hangi ülkeye karşıdır?", a: ["San Marino", "Andorra", "Lihtenştayn", "Malta"], c: 0 },
+        { q: "Roger Federer kariyerinde kaç Grand Slam kazanmıştır?", a: ["18", "19", "20", "21"], c: 2 },
+        { q: "Trabzonspor'un eski stadının adı nedir?", a: ["Hüseyin Avni Aker", "Şenol Güneş", "Medical Park", "Akyazı"], c: 0 },
+        { q: "NBA'de en çok MVP ödülü kazanan oyuncu kimdir?", a: ["Michael Jordan", "LeBron James", "Kareem Abdul-Jabbar", "Bill Russell"], c: 2 },
+        { q: "Fenerbahçe'nin efsanevi kalecisi Volkan Demirel kaç yıl forma giymiştir?", a: ["10", "12", "14", "16"], c: 2 },
+        { q: "Türkiye'nin ilk Olimpiyat altın madalyasını hangi sporcu kazanmıştır?", a: ["Naim Süleymanoğlu", "Halil Mutlu", "Recep Çelik", "Hamza Yerlikaya"], c: 0 },
+        { q: "Beşiktaş'ın 3 büyüklerden tek namağlup şampiyon olduğu sezon hangisidir?", a: ["1989-90", "1990-91", "1991-92", "1992-93"], c: 2 },
+        { q: "Türk voleybolunun yıldızı Ebrar Karakurt hangi mevkide oynar?", a: ["Pasör", "Smaçör", "Libero", "Orta Oyuncu"], c: 1 },
+        { q: "En çok Ballon d'Or (Altın Top) kazanan futbolcu kimdir?", a: ["Cristiano Ronaldo", "Lionel Messi", "Michel Platini", "Marco van Basten"], c: 1 },
+        { q: "Trabzonspor'un ilk şampiyonluğu hangi yılda gerçekleşmiştir?", a: ["1973-74", "1974-75", "1975-76", "1976-77"], c: 2 },
+        { q: "Halep okçuluk sahası hangi şehrimizde meşhurdur?", a: ["İstanbul", "Ankara", "İzmir", "Konya"], c: 3 },
+        { q: "Türkiye basketbol ligi (BSL) en çok şampiyon olan takım hangisidir?", a: ["Fenerbahçe", "Anadolu Efes", "Galatasaray", "Beşiktaş"], c: 1 },
+        { q: "Spor Toto Süper Lig'de en çok gol atan yabancı futbolcu kimdir?", a: ["Alex de Souza", "Mario Jardel", "Burak Yılmaz", "Fernandao"], c: 0 },
+        { q: "Milli okçu Mete Gazoz hangi olimpiyatta altın madalya kazanmıştır?", a: ["Rio 2016", "Tokyo 2020", "Londra 2012", "Pekin 2008"], c: 1 },
+        { q: "Türk halterci Naim Süleymanoğlu'nun lakabı nedir?", a: ["Hercules", "Cep Herkülü", "Dev Adam", "Demir Adam"], c: 1 },
+        { q: "Beşiktaş'ın efsane golcüsü Sergen Yalçın hangi takımla şampiyonluk yaşamamıştır?", a: ["Beşiktaş", "Galatasaray", "İstanbulspor", "Trabzonspor"], c: 2 },
+        { q: "Fransa'da düzenlenen ünlü bisiklet turunun adı nedir?", a: ["Giro d'Italia", "Tour de France", "Vuelta", "Paris-Roubaix"], c: 1 },
+        { q: "En çok dünya şampiyonluğu olan milli güreşçimiz kimdir?", a: ["Hamza Yerlikaya", "Taha Akgül", "Rıza Kayaalp", "Ahmet Taşçı"], c: 2 },
+        { q: "Süper Lig'de en çok asist yapan futbolcu kimdir?", a: ["Alex de Souza", "Mehmet Topuz", "Volkan Şen", "Gökhan Töre"], c: 0 },
+        { q: "Türkiye'nin ilk kadın milli futbol takımı kaptanı kimdir?", a: ["Bilgin Defterli", "Yağmur Uraz", "Didem Karagenç", "Ebru Topçu"], c: 2 },
+        { q: "F1 tarihinde en genç dünya şampiyonu olan pilot kimdir?", a: ["Sebastian Vettel", "Lewis Hamilton", "Max Verstappen", "Fernando Alonso"], c: 2 },
+        { q: "Galatasaray'ın eski teknik direktörü Fatih Terim kaç kez şampiyonluk yaşamıştır?", a: ["6", "7", "8", "9"], c: 1 },
+        { q: "Türk tenisçi Çağla Büyükakçay'ın en yüksek WTA sıralaması kaçtır?", a: ["50", "60", "70", "80"], c: 2 },
+        { q: "Fenerbahçe'de forma giyen en golcü yabancı futbolcu kimdir?", a: ["Alex de Souza", "Roberto Carlos", "Moussa Sow", "Van Persie"], c: 0 },
+        { q: "Türkiye kadın voleybol milli takımının lakabı nedir?", a: ["Sultans of the Net", "Filenin Sultanları", "Voleybol Kraliçeleri", "Ağların Sultanları"], c: 1 },
+        { q: "Dünyanın en pahalı futbol stadyumu hangisidir?", a: ["Wembley", "Camp Nou", "Bernabeu", "SoFi Stadium"], c: 3 },
+        { q: "Türkiye'nin ilk kez katıldığı Eurovision şarkı yarışmasını kazanan sporcumuz kimdir?", a: ["Sertab Erener", "Şebnem Paker", "Hadise", "Manga"], c: 0 },
+        { q: "Trabzonspor'un efsane kalecisi Şenol Güneş hangi takımın teknik direktörüdür?", a: ["Beşiktaş", "Trabzonspor", "Fenerbahçe", "Galatasaray"], c: 0 },
+        { q: "Türk boksör Buse Naz Çakıroğlu hangi olimpiyatta gümüş madalya kazanmıştır?", a: ["Rio 2016", "Tokyo 2020", "Londra 2012", "Pekin 2008"], c: 1 },
+        { q: "En çok Dünya Kupası'na katılan ülke hangisidir?", a: ["Almanya", "Brezilya", "Arjantin", "İtalya"], c: 1 },
+        { q: "Türk spor tarihinde en çok gol atan futbolcu kimdir?", a: ["Hakan Şükür", "Burak Yılmaz", "Cenk Tosun", "Tuncay Şanlı"], c: 0 },
+        { q: "Süper Lig'in en golcü takımı hangi sezondadır?", a: ["2010-11", "2011-12", "2012-13", "2013-14"], c: 0 }
+    ];
+
+    // ==================== KLASİK SORULAR (50 SORU) ====================
+    const classicQuestions = [
+        { q: "Dünya okyanuslarının bilinen en derin noktası olan çukura ne ad verilir?", a: ["Porto Riko Çukuru", "Tonga Çukuru", "Mariana Çukuru", "Arka Kapı"], c: 2 },
+        { q: "Dünyanın en büyük okyanusu hangisidir?", a: ["Atlas Okyanusu", "Hint Okyanusu", "Pasifik Okyanusu", "Arktik Okyanusu"], c: 2 },
+        { q: "Işık yılı aşağıdakilerden hangisinin birimidir?", a: ["Hız", "Zaman", "Mesafe", "Işık şiddeti"], c: 2 },
+        { q: "Hangisi bir iç denizdir?", a: ["Akdeniz", "Karadeniz", "Hazar Denizi", "Kızıldeniz"], c: 2 },
+        { q: "Amazon Nehri hangi kıtadadır?", a: ["Afrika", "Asya", "Güney Amerika", "Kuzey Amerika"], c: 2 },
+        { q: "Türkiye'nin başkenti hangi şehirdir?", a: ["İstanbul", "Ankara", "İzmir", "Bursa"], c: 1 },
+        { q: "Güneş sistemindeki en büyük gezegen hangisidir?", a: ["Mars", "Satürn", "Jüpiter", "Neptün"], c: 2 },
+        { q: "Mona Lisa tablosunu kim yapmıştır?", a: ["Picasso", "Van Gogh", "Leonardo da Vinci", "Michelangelo"], c: 2 },
+        { q: "Dünyada en çok konuşulan dil hangisidir?", a: ["İngilizce", "Mandarin Çincesi", "İspanyolca", "Arapça"], c: 0 },
+        { q: "Dünya'nın en yüksek dağı hangisidir?", a: ["K2", "Everest", "Kilimanjaro", "Ağrı Dağı"], c: 1 },
+        { q: "Osmanlı İmparatorluğu hangi yılda kuruldu?", a: ["1299", "1453", "1071", "1326"], c: 0 },
+        { q: "Bir yılda kaç gün vardır?", a: ["364", "365", "366", "360"], c: 1 },
+        { q: "'Au' sembolü hangi elementtir?", a: ["Gümüş", "Altın", "Alüminyum", "Arsenik"], c: 1 },
+        { q: "Hangisi bir meyvedir?", a: ["Patates", "Havuç", "Domates", "Soğan"], c: 2 },
+        { q: "Türkiye kaç komşu ülkeyle çevrilidir?", a: ["6", "7", "8", "9"], c: 2 },
+        { q: "Işık hızı saniyede yaklaşık kaç km'dir?", a: ["300.000", "150.000", "500.000", "200.000"], c: 0 },
+        { q: "İstiklal Marşı'nın bestecisi kimdir?", a: ["Osman Zeki Üngör", "Zeki Müren", "Münir Nurettin Selçuk", "Sadettin Kaynak"], c: 0 },
+        { q: "Güneş'e en yakın gezegen hangisidir?", a: ["Venüs", "Merkür", "Mars", "Dünya"], c: 1 },
+        { q: "Pi sayısının ilk üç basamağı?", a: ["3.14", "3.15", "3.16", "3.13"], c: 0 },
+        { q: "Cumhuriyet hangi yılda ilan edildi?", a: ["1920", "1921", "1922", "1923"], c: 3 },
+        { q: "İnsan vücudunda yaklaşık kaç kemik vardır?", a: ["196", "206", "216", "186"], c: 1 },
+        { q: "Başkenti Paris olan ülke?", a: ["İtalya", "İspanya", "Fransa", "Belçika"], c: 2 },
+        { q: "Futbol takımında kaç oyuncu vardır?", a: ["10", "11", "12", "9"], c: 1 },
+        { q: "En hızlı koşan hayvan?", a: ["Aslan", "Çita", "Leopar", "Kaplan"], c: 1 },
+        { q: "Türkiye'nin en uzun nehri?", a: ["Fırat", "Dicle", "Kızılırmak", "Sakarya"], c: 2 },
+        { q: "Bir dakikada kaç saniye?", a: ["50", "60", "70", "100"], c: 1 },
+        { q: "Hangisi yaz mevsimi ayıdır?", a: ["Mart", "Nisan", "Temmuz", "Ekim"], c: 2 },
+        { q: "Atatürk'ün doğum yılı?", a: ["1880", "1881", "1882", "1883"], c: 1 },
+        { q: "Dünya yaklaşık kaç yaşında?", a: ["3.5 milyar yıl", "4.5 milyar yıl", "5.5 milyar yıl", "6.5 milyar yıl"], c: 1 },
+        { q: "Hangisi gezegen değildir?", a: ["Plüton", "Merkür", "Mars", "Venüs"], c: 0 },
+        { q: "'O' sembolü hangi element?", a: ["Altın", "Oksijen", "Osmiyum", "Gümüş"], c: 1 },
+        { q: "Hangisi ada ülkesidir?", a: ["Japonya", "Almanya", "Fransa", "İsviçre"], c: 0 },
+        { q: "En büyük kara hayvanı?", a: ["Zürafa", "Fil", "Su aygırı", "Gergedan"], c: 1 },
+        { q: "Hangisi müzik aletidir?", a: ["Palet", "Keman", "Fırça", "Cetvel"], c: 1 },
+        { q: "En hızlı uçan kuş?", a: ["Kartal", "Doğan", "Albatros", "Serçe"], c: 1 },
+        { q: "Türkiye'nin en kalabalık şehri?", a: ["Ankara", "İzmir", "İstanbul", "Bursa"], c: 2 },
+        { q: "En soğuk kıta?", a: ["Asya", "Avrupa", "Antarktika", "Kuzey Amerika"], c: 2 },
+        { q: "Hangisi renk değildir?", a: ["Kırmızı", "Mavi", "Ses", "Yeşil"], c: 2 },
+        { q: "Su kaç derecede donar?", a: ["-1", "0", "1", "10"], c: 1 },
+        { q: "Hangisi yapay uydu değildir?", a: ["Ay", "Hubble", "GPS", "ISS"], c: 0 },
+        { q: "Türkiye'nin en uzun kara sınırı?", a: ["Yunanistan", "Suriye", "İran", "Irak"], c: 1 },
+        { q: "Hangisi kan grubu değildir?", a: ["A", "B", "AB", "X"], c: 3 },
+        { q: "En yaygın kan grubu?", a: ["A", "B", "0", "AB"], c: 2 },
+        { q: "Hangisi zıttır?", a: ["Sıcak - Soğuk", "Masa - Sandalye", "Kalem - Defter", "Araba - Uçak"], c: 0 },
+        { q: "Kalp kaç odacıklıdır?", a: ["2", "3", "4", "5"], c: 2 },
+        { q: "Hangisi solunum organıdır?", a: ["Kalp", "Akciğer", "Karaciğer", "Böbrek"], c: 1 },
+        { q: "En küçük asal sayı?", a: ["0", "1", "2", "3"], c: 2 },
+        { q: "Hangisi programlama dilidir?", a: ["HTML", "CSS", "JavaScript", "Photoshop"], c: 2 },
+        { q: "Türkiye'nin en büyük gölü?", a: ["Tuz Gölü", "Van Gölü", "Beyşehir", "Eğirdir"], c: 1 },
+        { q: "2+2 kaç eder?", a: ["3", "4", "5", "6"], c: 1 }
+    ];
+
+    let currentCategory = null;
+    let currentQuestions = [];
+    
+    // ==================== AFK SİSTEMİ ====================
+    let isAfk = false;
+    let savedTimeLeft = 0;
+    
+    function toggleAfk() {
+        if (answered) return;
+        
+        isAfk = !isAfk;
+        const afkBtn = document.getElementById('afkBtn');
+        const answerBtns = document.querySelectorAll('.answer-btn');
+        const jokerBtn = document.getElementById('jokerBtn');
+        
+        if (isAfk) {
+            if (timer) {
+                savedTimeLeft = timeLeft;
+                clearInterval(timer);
+                timer = null;
+            }
+            answerBtns.forEach(btn => btn.disabled = true);
+            if (jokerBtn) jokerBtn.disabled = true;
+            if (afkBtn) afkBtn.classList.add('active');
+        } else {
+            if (gameActive && !answered && savedTimeLeft !== undefined && savedTimeLeft > 0) {
+                timeLeft = savedTimeLeft;
+                updateTimerUI();
+                if (timer) clearInterval(timer);
+                timer = setInterval(() => {
+                    if (!gameActive) return;
+                    if (isAfk) return;
+                    if (timeLeft <= 0 && !answered) { 
+                        clearInterval(timer); 
+                        timer = null; 
+                        timeOutNoAnswer(); 
+                    } else if (timeLeft > 0) { 
+                        timeLeft--; 
+                        updateTimerUI(); 
+                    }
+                }, 1000);
+            } else if (savedTimeLeft === 0 || savedTimeLeft === undefined) {
+                if (!answered && timeLeft <= 0) {
+                    timeOutNoAnswer();
+                }
+            }
+            answerBtns.forEach(btn => btn.disabled = false);
+            if (jokerBtn && !jokerUsed) jokerBtn.disabled = false;
+            if (afkBtn) afkBtn.classList.remove('active');
+        }
+    }
+    
+    // ==================== PAYLAŞ FONKSİYONU ====================
+    function shareGame() {
+        const url = "https://dosya.co/cau9k45rswzc/windomquiz.apk.html";
+        const title = t('shareTitle');
+        const text = t('shareText');
+        
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                text: text,
+                url: url
+            }).catch(err => console.log('Paylaşım iptal edildi:', err));
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                alert(currentLang === 'tr' ? 'Link kopyalandı! 🎉' : 'Link copied! 🎉');
+            }).catch(() => {
+                alert(currentLang === 'tr' ? 'Link: ' + url : 'Link: ' + url);
+            });
+        }
+    }
+    
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function shuffleAnswers(question) {
+        const answers = [...question.a];
+        const correctAnswer = question.a[question.c];
+        const shuffled = shuffleArray([...answers]);
+        const newCorrectIndex = shuffled.indexOf(correctAnswer);
+        return { answers: shuffled, correct: newCorrectIndex };
+    }
+
+    let questions = [];
+    let currentIndex = 0, correct = 0, wrong = 0, answered = false, timer = null, timeLeft = 60, gameActive = false;
+    let vibrationEnabled = true;
+    let soundEnabled = true;
+    let jokerUsed = false;
+    let audioCtx = null;
+    
+    const app = document.getElementById('app');
+    
+    function playSound(type) {
+        if (!soundEnabled) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine';
+            if (type === 'correct') {
+                oscillator.frequency.value = 880;
+                gainNode.gain.value = 0.25;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4);
+                oscillator.stop(audioCtx.currentTime + 0.4);
+            } else {
+                oscillator.frequency.value = 440;
+                gainNode.gain.value = 0.25;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        } catch(e) { console.log("Ses hatası", e); }
+    }
+    
+    function vibrate() {
+        if (vibrationEnabled && navigator.vibrate) navigator.vibrate(80);
+    }
+    
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('quizLang', lang);
+        renderMenu();
+    }
+    
+    function renderMenu() {
+        app.innerHTML = `
+            <div class="menu-screen">
+                <div class="icon-trophy">
+                    <div class="cup-body"></div>
+                    <div class="cup-handle"></div>
+                    <div class="cup-base"></div>
+                    <div class="star"></div>
+                </div>
+                <div class="menu-title">${t('menuTitle')}</div>
+                <div class="menu-subtitle">${t('menuSubtitle')}</div>
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="startBtn"><span class="icon-play"><div class="triangle"></div></span> ${t('startGame')}</button>
+                    <button class="share-btn" id="shareBtn"><span class="icon-share"><div class="line"></div><div class="dot"></div></span> ${t('share')}</button>
+                    <button class="menu-btn" id="settingsBtn"><span class="icon-settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </span> ${t('settings')}</button>
+                </div>
+                <div id="settingsPanel" class="settings-panel">
+                    <div class="setting-item">
+                        <div class="setting-label"><span class="icon-vibrate"><div class="bar bar-1"></div><div class="bar bar-2"></div><div class="bar bar-3"></div><div class="bar bar-4"></div><div class="bar bar-5"></div><div class="wave w1"></div><div class="wave w2"></div><div class="wave w3"></div></span> ${t('vibration')}</div>
+                        <div class="toggle-switch ${vibrationEnabled ? 'active' : ''}" id="vibToggle"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label"><span class="icon-sound"><div class="speaker"></div><div class="wave wave-1"></div><div class="wave wave-2"></div><div class="wave wave-3"></div><div class="dot"></div></span> ${t('sound')}</div>
+                        <div class="toggle-switch ${soundEnabled ? 'active' : ''}" id="soundToggle"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label"><span class="icon-music"><div class="note"></div><div class="note2"></div></span> ${t('music')}</div>
+                        <div class="toggle-switch ${musicEnabled ? 'active' : ''}" id="musicToggle"></div>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-label"><span class="icon-language"><div class="globe"></div><div class="globe-line"></div><div class="globe-line2"></div><div class="bubble"></div></span> ${t('language')}</div>
+                        <div class="lang-selector">
+                            <div class="lang-option ${currentLang === 'tr' ? 'active' : ''}" data-lang="tr">Türkçe</div>
+                            <div class="lang-option ${currentLang === 'en' ? 'active' : ''}" data-lang="en">English</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('startBtn').onclick = showCategoryMenu;
+        document.getElementById('shareBtn').onclick = shareGame;
+        document.getElementById('settingsBtn').onclick = () => document.getElementById('settingsPanel').classList.toggle('show');
+        document.getElementById('vibToggle').onclick = (e) => {
+            vibrationEnabled = !vibrationEnabled;
+            e.target.classList.toggle('active', vibrationEnabled);
+        };
+        document.getElementById('soundToggle').onclick = (e) => {
+            soundEnabled = !soundEnabled;
+            e.target.classList.toggle('active', soundEnabled);
+        };
+        const musicToggle = document.getElementById('musicToggle');
+        if (musicToggle) {
+            musicToggle.onclick = toggleMusic;
+        }
+        document.querySelectorAll('.lang-option').forEach(opt => {
+            opt.onclick = () => setLanguage(opt.dataset.lang);
+        });
+        
+        updateMusicPanel();
+    }
+    
+    function showCategoryMenu() {
+        app.innerHTML = `
+            <div class="category-screen">
+                <div class="category-title">${t('selectCategory')}</div>
+                <div class="category-subtitle">📖 ${t('menuSubtitle')}</div>
+                <div class="category-grid">
+                    <button class="category-btn" id="categoryClassic">${t('categoryClassic')}</button>
+                    <button class="category-btn" id="categorySports">${t('categorySports')}</button>
+                    <button class="category-btn" id="categoryWhoIs">${t('categoryWhoIs')}</button>
+                </div>
+                <button class="category-back" id="backToMenu">${t('back')}</button>
+            </div>
+        `;
+        
+        document.getElementById('categoryClassic').onclick = () => selectCategory('classic');
+        document.getElementById('categorySports').onclick = () => selectCategory('sports');
+        document.getElementById('categoryWhoIs').onclick = () => selectCategory('whois');
+        document.getElementById('backToMenu').onclick = renderMenu;
+    }
+    
+    function selectCategory(category) {
+        currentCategory = category;
+        
+        if (category === 'classic') {
+            currentQuestions = [...classicQuestions];
+            startGameWithQuestions();
+        } else if (category === 'sports') {
+            currentQuestions = [...sportsQuestions];
+            startGameWithQuestions();
+        } else if (category === 'whois') {
+            currentQuestions = [...whoIsQuestions];
+            startGameWithQuestions();
+        }
+    }
+    
+    function startGameWithQuestions() {
+        questions = currentQuestions.map(q => {
+            const shuffled = shuffleAnswers(q);
+            return {
+                question: q.q,
+                answers: shuffled.answers,
+                correct: shuffled.correct,
+                isImage: currentCategory === 'whois'
+            };
+        });
+        currentIndex = 0; correct = 0; wrong = 0; answered = false; jokerUsed = false; isAfk = false;
+        gameActive = true;
+        if (timer) clearInterval(timer);
+        renderGame();
+    }
+    
+    function startGame() {
+        showCategoryMenu();
+    }
+    
+    function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+    
+    function startTimer() {
+        if (isAfk) return;
+        timeLeft = 60;
+        updateTimerUI();
+        stopTimer();
+        timer = setInterval(() => {
+            if (!gameActive) return;
+            if (isAfk) return;
+            if (timeLeft <= 0 && !answered) { clearInterval(timer); timer = null; timeOutNoAnswer(); }
+            else if (timeLeft > 0) { timeLeft--; updateTimerUI(); }
+        }, 1000);
+    }
+    
+    function updateTimerUI() {
+        const fill = document.getElementById('timerFill');
+        const txt = document.getElementById('timerText');
+        if (fill) fill.style.width = `${(timeLeft/60)*100}%`;
+        if (txt) txt.innerHTML = `<span class="icon-timer"><div class="circle"></div><div class="hand"></div><div class="dot"></div></span> ${timeLeft} ${t('seconds')}`;
+    }
+    
+    function useJoker() {
+        if (jokerUsed || answered || isAfk) return;
+        jokerUsed = true;
+        const jokerBtn = document.getElementById('jokerBtn');
+        if (jokerBtn) jokerBtn.classList.add('disabled');
+        
+        const q = questions[currentIndex];
+        const wrongIndices = [];
+        for (let i = 0; i < q.answers.length; i++) {
+            if (i !== q.correct) wrongIndices.push(i);
+        }
+        const toRemove = [];
+        while (toRemove.length < 2 && wrongIndices.length > 0) {
+            const rand = Math.floor(Math.random() * wrongIndices.length);
+            toRemove.push(wrongIndices[rand]);
+            wrongIndices.splice(rand, 1);
+        }
+        const btns = document.querySelectorAll('.answer-btn');
+        btns.forEach((btn, idx) => {
+            if (toRemove.includes(idx)) {
+                btn.classList.add('hidden');
+            }
+        });
+    }
+    
+    function timeOutNoAnswer() {
+        if (answered) return;
+        answered = true;
+        wrong++;
+        updateScores();
+        const msgDiv = document.getElementById('resultMessage');
+        if (msgDiv) msgDiv.innerHTML = `<span class="icon-cross"></span><span>${t('timeUp')}</span>`;
+        const btns = document.querySelectorAll('.answer-btn');
+        btns.forEach((btn, i) => { 
+            btn.disabled = true; 
+            btn.classList.remove('hidden');
+            if (i === questions[currentIndex].correct) btn.classList.add('correct'); 
+        });
+        setTimeout(() => {
+            if (currentIndex + 1 < questions.length) {
+                const cont = document.querySelector('.question-container');
+                if (cont && !document.querySelector('.next-btn')) {
+                    let next = document.createElement('button');
+                    next.className = 'next-btn';
+                    next.innerText = t('next');
+                    next.onclick = () => { currentIndex++; renderGame(); };
+                    cont.appendChild(next);
+                }
+            } else showGameOver();
+        }, 800);
+    }
+    
+    function renderGame() {
+        if (currentIndex >= questions.length) { showGameOver(); return; }
+        const q = questions[currentIndex];
+        const labels = ['A', 'B', 'C', 'D'];
+        answered = false; gameActive = true; isAfk = false;
+        
+        const isImageQuestion = currentCategory === 'whois';
+        
+        app.innerHTML = `
+            <div class="score-board">
+                <div class="score-item"><div class="score-label">${t('correct')}</div><div class="score-value" id="correctVal">${correct}</div></div>
+                <div class="score-item"><div class="score-label">${t('wrong')}</div><div class="score-value" id="wrongVal">${wrong}</div></div>
+                <button class="joker-btn" id="jokerBtn"><span class="icon-joker"><div class="circle-outer"></div><div class="text">50</div><div class="divider"></div></span> 50-50</button>
+                <button class="afk-btn" id="afkBtn">${t('afk')}</button>
+            </div>
+            <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+            <div class="timer-text" id="timerText"><span class="icon-timer"><div class="circle"></div><div class="hand"></div><div class="dot"></div></span> 60 ${t('seconds')}</div>
+            <div class="question-container">
+                <div class="question-header">${t('questionText')} ${currentIndex+1}</div>
+                ${isImageQuestion ? `<img class="question-img" src="${q.question}" alt="Bu Kim?" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23312e81%22/%3E%3Ctext x=%2250%22 y=%2267%22 font-size=%2250%22 text-anchor=%22middle%22 fill=%22white%22%3E?%3C/text%3E%3C/svg%3E'">` : `<div class="question-text">${q.question}</div>`}
+                <div class="answers-grid">
+                    ${q.answers.map((ans, idx) => `<button class="answer-btn" data-idx="${idx}"><div class="answer-label">${labels[idx]}</div><div class="answer-text">${ans}</div></button>`).join('')}
+                </div>
+                <div class="result-message" id="resultMessage"></div>
+            </div>
+        `;
+        updateScores();
+        startTimer();
+        
+        const jokerBtn = document.getElementById('jokerBtn');
+        if (jokerBtn) jokerBtn.onclick = useJoker;
+        
+        const afkBtn = document.getElementById('afkBtn');
+        if (afkBtn) afkBtn.onclick = toggleAfk;
+        
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            btn.onclick = () => { if (!answered && !isAfk) checkAnswer(parseInt(btn.dataset.idx)); };
+        });
+    }
+    
+    function checkAnswer(selected) {
+        if (answered || isAfk) return;
+        answered = true; gameActive = false; stopTimer(); vibrate();
+        const q = questions[currentIndex];
+        const btns = document.querySelectorAll('.answer-btn');
+        const msgDiv = document.getElementById('resultMessage');
+        
+        btns.forEach(b => { b.disabled = true; b.classList.remove('hidden'); });
+        
+        if (selected === q.correct) { 
+            btns[selected].classList.add('correct'); 
+            correct++; 
+            msgDiv.innerHTML = `<span class="icon-check"></span><span>${t('correctAnswer')}</span>`;
+            playSound('correct');
+        } else { 
+            btns[selected].classList.add('wrong'); 
+            btns[q.correct].classList.add('correct'); 
+            wrong++; 
+            msgDiv.innerHTML = `<span class="icon-cross"></span><span>${t('wrongAnswer')}</span>`;
+            playSound('wrong');
+        }
+        updateScores();
+        
+        setTimeout(() => {
+            if (currentIndex + 1 < questions.length) {
+                const cont = document.querySelector('.question-container');
+                if (cont && !document.querySelector('.next-btn')) {
+                    let next = document.createElement('button');
+                    next.className = 'next-btn';
+                    next.innerText = t('next');
+                    next.onclick = () => { currentIndex++; renderGame(); };
+                    cont.appendChild(next);
+                }
+            } else showGameOver();
+        }, 800);
+    }
+    
+    function updateScores() {
+        const cv = document.getElementById('correctVal'); if (cv) cv.innerText = correct;
+        const wv = document.getElementById('wrongVal'); if (wv) wv.innerText = wrong;
+    }
+    
+    function showGameOver() {
+        stopTimer(); gameActive = false;
+        const percent = Math.round((correct/questions.length)*100);
+        let msg;
+        if (percent >= 80) msg = t('perfect');
+        else if (percent >= 60) msg = t('veryGood');
+        else if (percent >= 40) msg = t('notBad');
+        else msg = t('keepPracticing');
+        
+        app.innerHTML = `
+            <div class="game-over">
+                <div class="icon-trophy">
+                    <div class="cup-body"></div>
+                    <div class="cup-handle"></div>
+                    <div class="cup-base"></div>
+                    <div class="star"></div>
+                </div>
+                <h2>${t('gameOver')}</h2>
+                <div class="final-score">${t('correct')}: ${correct}</div>
+                <div class="final-score">${t('wrong')}: ${wrong}</div>
+                <div class="final-score">${t('score')}: %${percent}</div>
+                <div style="font-size:28px; margin:20px 0; color:#a78bfa; font-weight:bold;">${msg}</div>
+                <button class="restart-btn" id="menuBtn">${t('mainMenu')}</button>
+            </div>
+        `;
+        document.getElementById('menuBtn').onclick = renderMenu;
+    }
+    
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        const swCode = `const CACHE_NAME = 'wisdom-quiz-v4';
+const urlsToCache = ['/', '/index.html', 'sarki1.mp3', 'sarki2.mp3', 'sarki3.mp3', 'sarki4.mp3', 'sarki5.mp3', 'sarki6.mp3', 'sarki7.mp3', 'sarki8.mp3', 'resim1.png', 'resim2.png', 'resim3.png', 'resim4.png', 'resim5.png', 'resim6.png', 'resim7.png', 'resim8.png', 'resim9.png', 'resim10.png', 'resim11.png'];
+self.addEventListener('install', event => {
+    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+    self.skipWaiting();
+});
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request).then(response => response || fetch(event.request))
+    );
+});`;
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).then(() => {
+            console.log('Service Worker registered');
+            document.getElementById('offlineBadge').style.display = 'block';
+        }).catch(err => console.log('SW error:', err));
+    }
+    
+    renderMenu();
+</script>
+</body>
+</html>
